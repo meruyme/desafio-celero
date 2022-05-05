@@ -39,7 +39,7 @@ class Team(models.Model):
     noc = models.ForeignKey(Noc, on_delete=models.CASCADE, related_name='teams')
 
     def __str__(self):
-        return f"{self.name} ({self.noc})"
+        return f"{self.name} {self.noc}"
 
 
 class Games(models.Model):
@@ -48,7 +48,7 @@ class Games(models.Model):
     host_city = models.ForeignKey(City, on_delete=models.CASCADE, related_name='games')
 
     def __str__(self):
-        return f"{self.year} {self.season}"
+        return f"{self.year} {self.get_season_display()}"
 
 
 class Athlete(models.Model):
@@ -60,7 +60,7 @@ class Athlete(models.Model):
 
 
 class AthleteGame(models.Model):
-    age = models.IntegerField()
+    age = models.IntegerField(null=True)
     height = models.FloatField(null=True)
     weight = models.FloatField(null=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='athletes')
@@ -71,4 +71,4 @@ class AthleteGame(models.Model):
 class AthleteGameEvent(models.Model):
     athlete_game = models.ForeignKey(AthleteGame, on_delete=models.CASCADE, related_name='events')
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='athlete_games')
-    medal = models.CharField(max_length=1, choices=Medal.CHOICES)
+    medal = models.CharField(max_length=1, choices=Medal.CHOICES, null=True)
