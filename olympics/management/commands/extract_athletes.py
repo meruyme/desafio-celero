@@ -1,3 +1,5 @@
+import traceback
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -18,9 +20,8 @@ class Command(BaseCommand):
 
     quantity_bulk = 10000
 
-    @transaction.atomic()
     def handle(self, *args, **options):
-        try:
+        with transaction.atomic():
             path = os.path.join('olympics', 'management', 'athlete_events.csv')
             empty_values = ['NA']
             # Processing AthleteGame with bulk_create
@@ -29,11 +30,11 @@ class Command(BaseCommand):
                 df = csv.reader(csv_file, delimiter=",")
                 next(df)
                 athletes = {athlete.name: athlete for athlete in Athlete.objects.all()}
-                nocs = {noc.code: noc for noc in Noc.objects.all()}
+                nocs = {noc.id: noc for noc in Noc.objects.all()}
                 cities = {city.name: city for city in City.objects.all()}
-                games = {f"{game.year} {game.season}": game for game in Games.objects.all()}
+                games = {f"{game.year} {game.get_season_display()}": game for game in Games.objects.all()}
                 sports = {sport.name: sport for sport in Sport.objects.all()}
-                events = {event.name: event for event in Event.objects.all()}
+                events = {f"{event.name} {event.sport.name}": event for event in Event.objects.all()}
                 teams = {f"{team.name} {team.noc}": team for team in Team.objects.all()}
                 athletes_games = {f"{athlete_game.athlete} {athlete_game.team} {athlete_game.game}": athlete_game
                                   for athlete_game in AthleteGame.objects.all()}
@@ -47,29 +48,29 @@ class Command(BaseCommand):
                     city = cities.get(row[self.h['City']])
                     game = games.get(row[self.h['Games']])
                     sport = sports.get(row[self.h['Sport']])
-                    event = events.get(row[self.h['Event']])
+                    event = events.get(f"{row[self.h['Event']]} {row[self.h['Sport']]}")
                     team = teams.get(f"{row[self.h['Team']]} {row[self.h['NOC']]}")
                     name_item = f"{row[self.h['Name']]} {row[self.h['Team']]} {row[self.h['NOC']]} " \
                                 f"{row[self.h['Games']]}"
+                    if not athlete:
+                        athlete = Athlete.objects.create(name=row[self.h['Name']], sex=row[self.h['Sex']])
+                        athletes[athlete.name] = athlete
+                    if not city:
+                        city = City.objects.create(name=row[self.h['City']])
+                        cities[city.name] = city
+                    if not game:
+                        game = Games.objects.create(year=row[self.h['Year']], season=season, host_city=city)
+                        games[f"{game.year} {game.get_season_display()}"] = game
+                    if not sport:
+                        sport = Sport.objects.create(name=row[self.h['Sport']])
+                        sports[sport.name] = sport
+                    if not event:
+                        event = Event.objects.create(name=row[self.h['Event']], sport=sport)
+                        events[f"{event.name} {event.sport.name}"] = event
+                    if not team:
+                        team = Team.objects.create(name=row[self.h['Team']], noc=noc)
+                        teams[f"{team.name} {team.noc}"] = team
                     if not athletes_games_aux.get(name_item):
-                        if not athlete:
-                            athlete = Athlete.objects.create(name=row[self.h['Name']], sex=row[self.h['Sex']])
-                            athletes[athlete.name] = athlete
-                        if not city:
-                            city = City.objects.create(name=row[self.h['City']])
-                            cities[city.name] = city
-                        if not game:
-                            game = Games.objects.create(year=row[self.h['Year']], season=season, host_city=city)
-                            games[f"{game.year} {game.season}"] = game
-                        if not sport:
-                            sport = Sport.objects.create(name=row[self.h['Sport']])
-                            sports[sport.name] = sport
-                        if not event:
-                            event = Event.objects.create(name=row[self.h['Event']], sport=sport)
-                            events[event.name] = event
-                        if not team:
-                            team = Team.objects.create(name=row[self.h['Team']], noc=noc)
-                            teams[f"{team.name} {team.noc}"] = team
                         athletes_games_aux[name_item] = True
                         age = row[self.h['Age']] if row[self.h['Age']] not in empty_values else None
                         height = row[self.h['Height']] if row[self.h['Height']] not in empty_values else None
@@ -77,13 +78,13 @@ class Command(BaseCommand):
                         data.append(AthleteGame(age=age, height=height,
                                                 weight=weight,
                                                 team=team, game=game, athlete=athlete))
-                        if len(data) > self.quantity_bulk:
-                            objs = AthleteGame.objects.bulk_create(data)
-                            athletes_games.update(
-                                {f"{athlete_game.athlete} {athlete_game.team} {athlete_game.game}": athlete_game
-                                 for athlete_game in objs}
-                            )
-                            data = []
+                    if len(data) > self.quantity_bulk:
+                        objs = AthleteGame.objects.bulk_create(data)
+                        athletes_games.update(
+                            {f"{athlete_game.athlete} {athlete_game.team} {athlete_game.game}": athlete_game
+                             for athlete_game in objs}
+                        )
+                        data = []
                 if data:
                     objs = AthleteGame.objects.bulk_create(data)
                     athletes_games.update(
@@ -97,20 +98,26 @@ class Command(BaseCommand):
                 df = csv.reader(csv_file, delimiter=",")
                 next(df)
                 data = []
+
+                athletes_games_event = {f"{athlete_game_event.athlete} {athlete_game_event.team} "
+                                        f"{athlete_game_event.game} {athlete_game_event.event.name} "
+                                        f"{athlete_game_event.event.sport.name}": True
+                                        for athlete_game_event in AthleteGameEvent.objects.all()}
                 for row in df:
-                    medal = get_id(Medal, row[self.h['Medal']]) if row[self.h['Medal']] not in empty_values \
-                        else None
-                    event = events.get(row[self.h['Event']])
-                    name_item = f"{row[self.h['Name']]} {row[self.h['Team']]} {row[self.h['NOC']]} " \
-                                f"{row[self.h['Games']]}"
-                    athlete_game = athletes_games.get(name_item)
-                    data.append(AthleteGameEvent(athlete_game=athlete_game, event=event, medal=medal))
+                    name_item_event = f"{row[self.h['Name']]} {row[self.h['Team']]} {row[self.h['NOC']]} " \
+                                      f"{row[self.h['Games']]} {row[self.h['Event']]} {row[self.h['Sport']]}"
+                    if not athletes_games_event.get(name_item_event):
+                        athletes_games_event[name_item_event] = True
+                        medal = get_id(Medal, row[self.h['Medal']]) if row[self.h['Medal']] not in empty_values \
+                            else None
+                        event = events.get(f"{row[self.h['Event']]} {row[self.h['Sport']]}")
+                        name_item = f"{row[self.h['Name']]} {row[self.h['Team']]} {row[self.h['NOC']]} " \
+                                    f"{row[self.h['Games']]}"
+                        athlete_game = athletes_games.get(name_item)
+                        data.append(AthleteGameEvent(athlete_game=athlete_game, event_id=event.id, medal=medal))
                     if len(data) > self.quantity_bulk:
                         AthleteGameEvent.objects.bulk_create(data)
                         data = []
                 if data:
                     AthleteGameEvent.objects.bulk_create(data)
                 print("OK!")
-
-        except Exception as e:
-            print(e)
