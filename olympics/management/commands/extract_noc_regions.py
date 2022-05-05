@@ -11,7 +11,7 @@ class Command(BaseCommand):
         try:
             path = os.path.join('olympics', 'management', 'noc_regions.csv')
             df = pd.read_csv(path, encoding='utf-8', sep=',')
-            df.apply(lambda row: Noc.objects.update_or_create(code=row['NOC'],
+            df.apply(lambda row: Noc.objects.update_or_create(id=row['NOC'],
                                                               defaults={'region': row['region'],
                                                                         'notes': None if pd.isna(row['notes']) else
                                                                         row['notes']}), axis=1)
