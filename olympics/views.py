@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics
 
-from olympics.models import City, Sport, Team, Games, Athlete
+from olympics.models import City, Sport, Team, Games, Athlete, Event
 from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
-    AthleteSerializer
+    AthleteSerializer, EventSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -112,3 +112,24 @@ class AthleteDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Athlete.objects.all()
     serializer_class = AthleteSerializer
 
+
+class EventList(generics.ListCreateAPIView):
+    model = Event
+    serializer_class = EventSerializer
+
+    def get_queryset(self):
+        queryset = Event.objects.all()
+        name = self.request.query_params.get('name')
+        sport = self.request.query_params.get('sport')
+
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if sport:
+            queryset = queryset.filter(sport__name__icontains=sport)
+
+        return queryset
+
+
+class EventDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Event.objects.all()
+    serializer_class = EventSerializer
