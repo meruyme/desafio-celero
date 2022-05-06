@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics
 
-from olympics.models import City, Sport, Team, Games, Athlete, Event
+from olympics.models import City, Sport, Team, Games, Athlete, Event, AthleteGame
 from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
-    AthleteSerializer, EventSerializer
+    AthleteSerializer, EventSerializer, AthleteGameSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -133,3 +133,34 @@ class EventList(generics.ListCreateAPIView):
 class EventDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+
+
+class AthleteGameList(generics.ListCreateAPIView):
+    model = AthleteGame
+    serializer_class = AthleteGameSerializer
+
+    def get_queryset(self):
+        queryset = AthleteGame.objects.all()
+        athlete = self.request.query_params.get('athlete')
+        team = self.request.query_params.get('team')
+        noc = self.request.query_params.get('noc')
+        game_year = self.request.query_params.get('game_year')
+        game_season = self.request.query_params.get('game_season')
+
+        if athlete:
+            queryset = queryset.filter(athlete__name__icontains=athlete)
+        if team:
+            queryset = queryset.filter(team__name__icontains=team)
+        if noc:
+            queryset = queryset.filter(team__noc__pk=noc)
+        if game_year:
+            queryset = queryset.filter(game__year=game_year)
+        if game_season:
+            queryset = queryset.filter(game__season=game_season)
+
+        return queryset
+
+
+class AthleteGameDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AthleteGame.objects.all()
+    serializer_class = AthleteGameSerializer

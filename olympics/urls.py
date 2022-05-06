@@ -17,4 +17,6 @@ urlpatterns = [
     path('athletes/<int:pk>/', views.AthleteDetail.as_view()),
     path('events/', views.EventList.as_view()),
     path('events/<int:pk>/', views.EventDetail.as_view()),
+    path('athletes_games/', views.AthleteGameList.as_view()),
+    path('athletes_games/<int:pk>/', views.AthleteGameDetail.as_view()),
 ]

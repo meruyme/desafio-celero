@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from olympics.models import Athlete, City, Sport, Noc, Event, Games, Team
+from olympics.models import Athlete, City, Sport, Noc, Event, Games, Team, AthleteGame
 
 
 class NocSerializer(serializers.ModelSerializer):
@@ -106,4 +106,27 @@ class TeamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
+        fields = '__all__'
+
+
+class ReadAthleteGameSerializer(serializers.ModelSerializer):
+    team = TeamSerializer()
+    game = GamesSerializer()
+    athlete = AthleteSerializer()
+
+    class Meta:
+        model = AthleteGame
+        fields = '__all__'
+
+
+class AthleteGameSerializer(serializers.ModelSerializer):
+
+    def to_internal_value(self, data):
+        return super(AthleteGameSerializer, self).to_internal_value(data)
+
+    def to_representation(self, instance):
+        return ReadAthleteGameSerializer(instance).data
+
+    class Meta:
+        model = AthleteGame
         fields = '__all__'
