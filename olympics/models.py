@@ -56,8 +56,12 @@ class Games(models.Model):
     class Meta:
         unique_together = ('year', 'season')
 
-    def __str__(self):
+    @property
+    def game(self):
         return f"{self.year} {self.get_season_display()}"
+
+    def __str__(self):
+        return self.game
 
 
 class Athlete(models.Model):
