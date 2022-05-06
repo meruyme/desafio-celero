@@ -1,9 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics
 
-from olympics.models import City, Sport, Team, Games, Athlete, Event, AthleteGame
+from olympics.models import City, Sport, Team, Games, Athlete, Event, AthleteGame, AthleteGameEvent
 from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
-    AthleteSerializer, EventSerializer, AthleteGameSerializer
+    AthleteSerializer, EventSerializer, AthleteGameSerializer, AthleteGameEventSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -164,3 +164,46 @@ class AthleteGameList(generics.ListCreateAPIView):
 class AthleteGameDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = AthleteGame.objects.all()
     serializer_class = AthleteGameSerializer
+
+
+class AthleteGameEventList(generics.ListCreateAPIView):
+    model = AthleteGameEvent
+    serializer_class = AthleteGameEventSerializer
+
+    def get_queryset(self):
+        queryset = AthleteGameEvent.objects.all()
+        athlete = self.request.query_params.get('athlete')
+        team = self.request.query_params.get('team')
+        noc = self.request.query_params.get('noc')
+        game_year = self.request.query_params.get('game_year')
+        game_season = self.request.query_params.get('game_season')
+        event = self.request.query_params.get('event')
+        sport = self.request.query_params.get('sport')
+        has_medal = self.request.query_params.get('has_medal')
+        medal = self.request.query_params.get('medal')
+
+        if athlete:
+            queryset = queryset.filter(athlete_game__athlete__name__icontains=athlete)
+        if team:
+            queryset = queryset.filter(athlete_game__team__name__icontains=team)
+        if noc:
+            queryset = queryset.filter(athlete_game__team__noc__pk=noc)
+        if game_year:
+            queryset = queryset.filter(athlete_game__game__year=game_year)
+        if game_season:
+            queryset = queryset.filter(athlete_game__game__season=game_season)
+        if event:
+            queryset = queryset.filter(event__pk=event)
+        if sport:
+            queryset = queryset.filter(event__sport__pk=sport)
+        if has_medal:
+            queryset = queryset.filter(medal__isnull=False)
+        if medal:
+            queryset = queryset.filter(medal=medal)
+
+        return queryset
+
+
+class AthleteGameEventDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AthleteGameEvent.objects.all()
+    serializer_class = AthleteGameEventSerializer
