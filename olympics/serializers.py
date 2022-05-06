@@ -9,7 +9,23 @@ class NocSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ReadAthleteSerializer(serializers.ModelSerializer):
+    sex = serializers.CharField(source='get_sex_display')
+    sex_id = serializers.CharField(source='sex')
+
+    class Meta:
+        model = Athlete
+        fields = '__all__'
+
+
 class AthleteSerializer(serializers.ModelSerializer):
+
+    def to_internal_value(self, data):
+        return super(AthleteSerializer, self).to_internal_value(data)
+
+    def to_representation(self, instance):
+        return ReadAthleteSerializer(instance).data
+
     class Meta:
         model = Athlete
         fields = '__all__'
@@ -49,6 +65,9 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class ReadGamesSerializer(serializers.ModelSerializer):
+    game = serializers.CharField()
+    season = serializers.CharField(source='get_season_display')
+    season_id = serializers.CharField(source='season')
     host_city = CitySerializer()
 
     class Meta:

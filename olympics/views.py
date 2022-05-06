@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from rest_framework import generics
 
-from olympics.models import City, Sport, Team
-from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer
+from olympics.models import City, Sport, Team, Games, Athlete
+from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
+    AthleteSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -63,3 +64,51 @@ class TeamList(generics.ListCreateAPIView):
 class TeamDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
+
+
+class GamesList(generics.ListCreateAPIView):
+    model = Games
+    serializer_class = GamesSerializer
+
+    def get_queryset(self):
+        queryset = Games.objects.all()
+        season = self.request.query_params.get('season')
+        host_city = self.request.query_params.get('host_city')
+        year = self.request.query_params.get('year')
+
+        if season:
+            queryset = queryset.filter(season=season)
+        if host_city:
+            queryset = queryset.filter(host_city__name__icontains=host_city)
+        if year:
+            queryset = queryset.filter(year=year)
+
+        return queryset
+
+
+class GamesDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Games.objects.all()
+    serializer_class = GamesSerializer
+
+
+class AthleteList(generics.ListCreateAPIView):
+    model = Athlete
+    serializer_class = AthleteSerializer
+
+    def get_queryset(self):
+        queryset = Athlete.objects.all()
+        name = self.request.query_params.get('name')
+        sex = self.request.query_params.get('sex')
+
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if sex:
+            queryset = queryset.filter(sex=sex)
+
+        return queryset
+
+
+class AthleteDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Athlete.objects.all()
+    serializer_class = AthleteSerializer
+
