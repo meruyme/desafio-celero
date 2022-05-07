@@ -8,7 +8,7 @@ from rest_framework import permissions
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Desafio Back-end - Celero",
+      title="120 years of Olympic history: athletes and results ",
       default_version='v1',
       description="",
    ),
