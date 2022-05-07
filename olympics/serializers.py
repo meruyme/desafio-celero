@@ -110,9 +110,9 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class ReadAthleteGameSerializer(serializers.ModelSerializer):
-    team = TeamSerializer()
-    game = GamesSerializer()
-    athlete = AthleteSerializer()
+    team = ReadTeamSerializer()
+    game = ReadGamesSerializer()
+    athlete = ReadAthleteSerializer()
 
     class Meta:
         model = AthleteGame
@@ -133,10 +133,10 @@ class AthleteGameSerializer(serializers.ModelSerializer):
 
 
 class ReadAthleteGameEventSerializer(serializers.ModelSerializer):
-    event = EventSerializer()
-    team = TeamSerializer(source='athlete_game.team')
-    game = GamesSerializer(source='athlete_game.game')
-    athlete = AthleteSerializer(source='athlete_game.athlete')
+    event = ReadEventSerializer()
+    team = ReadTeamSerializer(source='athlete_game.team')
+    game = ReadGamesSerializer(source='athlete_game.game')
+    athlete = ReadAthleteSerializer(source='athlete_game.athlete')
     medal = serializers.CharField(source='get_medal_display')
     medal_id = serializers.CharField(source='medal')
 
