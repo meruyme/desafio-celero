@@ -6,7 +6,7 @@ from rest_framework import generics, status
 from olympics.models import City, Sport, Team, Games, Athlete, Event, AthleteGame, AthleteGameEvent
 from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
     AthleteSerializer, EventSerializer, AthleteGameSerializer, AthleteGameEventSerializer, ReadGamesSerializer, \
-    ReadAthleteSerializer
+    ReadAthleteSerializer, ReadEventSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -188,14 +188,29 @@ class EventList(generics.ListCreateAPIView):
         if name:
             queryset = queryset.filter(name__icontains=name)
         if sport:
-            queryset = queryset.filter(sport__name__icontains=sport)
+            queryset = queryset.filter(sport_id=sport)
 
         return queryset
+
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter('name', openapi.IN_QUERY,
+                                                              description="Event's name",
+                                                              type=openapi.TYPE_STRING, required=False),
+                                            openapi.Parameter('sport', openapi.IN_QUERY,
+                                                              description="Sport's ID",
+                                                              type=openapi.TYPE_INTEGER, required=False),
+                                            ],
+                         responses={status.HTTP_200_OK: openapi.Response('', ReadEventSerializer(many=True))})
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
 
 
 class EventDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+
+    @swagger_auto_schema(responses={status.HTTP_200_OK: openapi.Response('', ReadEventSerializer())})
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
 
 
 class AthleteGameList(generics.ListCreateAPIView):
