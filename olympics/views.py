@@ -6,7 +6,7 @@ from rest_framework import generics, status
 from olympics.models import City, Sport, Team, Games, Athlete, Event, AthleteGame, AthleteGameEvent
 from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
     AthleteSerializer, EventSerializer, AthleteGameSerializer, AthleteGameEventSerializer, ReadGamesSerializer, \
-    ReadAthleteSerializer, ReadEventSerializer
+    ReadAthleteSerializer, ReadEventSerializer, ReadAthleteGameSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -238,10 +238,34 @@ class AthleteGameList(generics.ListCreateAPIView):
 
         return queryset
 
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter('athlete', openapi.IN_QUERY,
+                                                              description="Athlete's name",
+                                                              type=openapi.TYPE_STRING, required=False),
+                                            openapi.Parameter('team', openapi.IN_QUERY,
+                                                              description="Team's name",
+                                                              type=openapi.TYPE_STRING, required=False),
+                                            openapi.Parameter('noc', openapi.IN_QUERY,
+                                                              description="NOC three-letter code",
+                                                              type=openapi.TYPE_STRING, required=False),
+                                            openapi.Parameter('game_year', openapi.IN_QUERY,
+                                                              description="Games's year",
+                                                              type=openapi.TYPE_INTEGER, required=False),
+                                            openapi.Parameter('game_season', openapi.IN_QUERY,
+                                                              description="Games's season ID",
+                                                              type=openapi.TYPE_INTEGER, required=False),
+                                            ],
+                         responses={status.HTTP_200_OK: openapi.Response('', ReadAthleteGameSerializer(many=True))})
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
+
 
 class AthleteGameDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = AthleteGame.objects.all()
     serializer_class = AthleteGameSerializer
+
+    @swagger_auto_schema(responses={status.HTTP_200_OK: openapi.Response('', ReadAthleteGameSerializer())})
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
 
 
 class AthleteGameEventList(generics.ListCreateAPIView):
