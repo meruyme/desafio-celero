@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework import serializers
 
 from olympics.models import Athlete, City, Sport, Noc, Event, Games, Team, AthleteGame, AthleteGameEvent
@@ -82,6 +84,14 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return ReadGamesSerializer(instance).data
+
+    def validate_year(self, year):
+        if year:
+            if not year.isdigit():
+                raise serializers.ValidationError("Ano inválido.")
+            elif not(1896 <= int(year) <= datetime.now().year):
+                raise serializers.ValidationError("Ano inválido.")
+        return year
 
     class Meta:
         model = Games
