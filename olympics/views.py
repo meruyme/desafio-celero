@@ -5,7 +5,8 @@ from rest_framework import generics, status
 
 from olympics.models import City, Sport, Team, Games, Athlete, Event, AthleteGame, AthleteGameEvent
 from olympics.serializers import CitySerializer, SportSerializer, TeamSerializer, ReadTeamSerializer, GamesSerializer, \
-    AthleteSerializer, EventSerializer, AthleteGameSerializer, AthleteGameEventSerializer, ReadGamesSerializer
+    AthleteSerializer, EventSerializer, AthleteGameSerializer, AthleteGameEventSerializer, ReadGamesSerializer, \
+    ReadAthleteSerializer
 
 
 class CityList(generics.ListCreateAPIView):
@@ -154,10 +155,25 @@ class AthleteList(generics.ListCreateAPIView):
 
         return queryset
 
+    @swagger_auto_schema(manual_parameters=[openapi.Parameter('name', openapi.IN_QUERY,
+                                                              description="Athlete's name",
+                                                              type=openapi.TYPE_STRING, required=False),
+                                            openapi.Parameter('sex', openapi.IN_QUERY,
+                                                              description="Sex's ID",
+                                                              type=openapi.TYPE_STRING, required=False),
+                                            ],
+                         responses={status.HTTP_200_OK: openapi.Response('', ReadAthleteSerializer(many=True))})
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
+
 
 class AthleteDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Athlete.objects.all()
     serializer_class = AthleteSerializer
+
+    @swagger_auto_schema(responses={status.HTTP_200_OK: openapi.Response('', ReadAthleteSerializer())})
+    def get(self, request, *args, **kwargs):
+        return super().get(self, request, *args, **kwargs)
 
 
 class EventList(generics.ListCreateAPIView):
