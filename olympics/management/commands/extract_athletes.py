@@ -18,11 +18,14 @@ class Command(BaseCommand):
         "Games": 8, "Year": 9, "Season": 10, "City": 11, "Sport": 12, "Event": 13, "Medal": 14
     }
 
+    def add_arguments(self, parser):
+        parser.add_argument('file_path', type=str)
+
     quantity_bulk = 10000
 
     def handle(self, *args, **options):
         with transaction.atomic():
-            path = os.path.join('olympics', 'management', 'athlete_events.csv')
+            path = options['file_path']
             empty_values = ['NA']
             # Processing AthleteGame with bulk_create
             print('Processing AthleteGame...')
